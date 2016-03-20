@@ -1,0 +1,17 @@
+Author = Daniel Bengtsson
+Description = Adds a button for automated integration to master
+
+[Inject r*]
+Description = Add button to review page
+Script = main.js
+Function = integrate
+
+[Page Integrate/push]
+Description = Push review to master
+Script = push.js
+Function = push
+
+[Page Integrate/ready]
+Description = Is review ready to be pushed
+Script = ready.js
+Function = is_ready
