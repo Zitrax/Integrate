@@ -19,13 +19,15 @@ function push() {
 	
 	var wc = review.branch.getWorkCopy();
 	var remotes = wc.run("remote");
-	if( remotes.split("\n").indexOf("target") == -1 ) {
-	    // FIXME: The remote should not be hardcoded
-	    wc.run("remote", "add", "target", "/home/danielb/git_critic_origin/test");
+	if( remotes.split("\n").indexOf("target") != -1 ) {
+	    wc.run("remote", "remove", "target");
 	}
+	var remote_base = critic.storage.get('remote_base');
+	// FIXME: Not a guarantee that the repo name is also used at base
+	wc.run("remote", "add", "target", remote_base + "/" + review.repository.name);
 
-	var out = wc.run("push", "target", "HEAD:refs/heads/master");
-	if( out == "" ) {
+	var out = wc.run("push", "target", "--porcelain", "HEAD:refs/heads/master");
+	if( out.split('\n')[1][0] == '=' ) {
 	    throw "Already integrated!";
 	}
 	review.close();
