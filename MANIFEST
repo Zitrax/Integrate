@@ -16,6 +16,11 @@ Description = Push review to master
 Script = push.js
 Function = push
 
+[Page Integrate/can_push]
+Description = Check if we need to rebase first
+Script = push.js
+Function = can_push
+
 [Page Integrate/ready]
 Description = Is review ready to be pushed
 Script = ready.js
