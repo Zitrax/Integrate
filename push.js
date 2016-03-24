@@ -22,6 +22,11 @@ function push() {
 	if( out.split('\n')[1][0] == '=' ) {
 	    throw "Already integrated!";
 	}
+
+	var new_batch = review.startBatch();
+	new_batch.writeNote("[Integrate] Changes merged to master");
+	new_batch.finish();
+
 	review.close();
 	
 	writeln(JSON.stringify({ status: "ok" }));

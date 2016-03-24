@@ -28,7 +28,6 @@ function can_push() {
 }
 
 function do_push_dialog(res) {
-    console.log(res);
     if(res == null) {
 	return;
     }
