@@ -1,10 +1,13 @@
 timer_id = null;
 
 $( document ).ready(function() {
-    var table = $('table.roles');
-    table.find('tr:last').after('<tr><th colspan="2">Preferences</th></tr>');
-    table.find('tr:last').after('<tr><td class="pattern">Remote base:</td>' +
-				'<td class="description"><input id="remote_base" type="text"></input></td></tr>');
+    // Not optimal - there could be another extension starting with the same name
+    // We should really get the base from the API somehow and drop this whole pref code
+    // ------------------
+    var td = $('span.name').filter(function() { return $(this).text().indexOf("Integrate") == 0; }).parent();
+    td.find('tr:last').after('<tr><th colspan="2">Preferences</th></tr>');
+    td.find('tr:last').after('<tr><td class="pattern">Remote base:</td>' +
+			     '<td class="description"><input id="remote_base" type="text"></input></td></tr>');
 
     $('input#remote_base').bind('change input', schedule_set_prefs);
     
