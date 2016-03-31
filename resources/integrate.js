@@ -5,7 +5,17 @@ $( document ).ready(function() {
       data: { review_id: critic.review.id },
       callback: add_button
     });
-    operation.execute();    
+    operation.execute();
+
+    // FIXME: Just for testing
+    operation = new critic.Operation({
+      action: "Branch candidates",
+      url: "Integrate/candidates",
+      data: { review_id: critic.review.id },
+      callback: add_button
+    });
+    operation.execute();
+
 });
 
 function add_button(result) {
@@ -14,6 +24,17 @@ function add_button(result) {
 			    onclick: can_push,
 			    scope: "global"})
     }
+}
+
+// FIXME: WIP
+function select_branch() {
+    var dialog = $('<div title="Chose target branch">' +
+		   '<p>Select a branch on which you want the changes integrated:</p>' +
+		   '</div>');
+    dialog.dialog({
+	width: 500,
+	buttons: { ok: function() { $(this).dialog("close"); }}
+    });
 }
 
 function can_push() {
@@ -40,7 +61,7 @@ function do_push_dialog(res) {
 	});
 	return;
     }
-   
+
     var dialog = $('<div title="Push changes to master">' +
 		   '<p>Review branch checked and seem to be OK. Ready to push?</p></div>');
     dialog.dialog({
