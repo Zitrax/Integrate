@@ -9,6 +9,7 @@ function push() {
 
     try {
 	var review = new critic.Review(data.review_id);
+	var branch = data.branch;
 
 	// Should already have been checked - but verify
 	if( ! review.progress.accepted ) {
@@ -18,13 +19,13 @@ function push() {
 	// Ready to try to push
 	// Assume remote is already setup in can_push()
 	var wc = review.branch.getWorkCopy();
-	var out = wc.run("push", "target", "--porcelain", "HEAD:refs/heads/master");
+	var out = wc.run("push", "target", "--porcelain", "HEAD:refs/heads/" + branch);
 	if( out.split('\n')[1][0] == '=' ) {
 	    throw "Already integrated!";
 	}
 
 	var new_batch = review.startBatch();
-	new_batch.writeNote("[Integrate] Changes merged to master");
+	new_batch.writeNote("[Integrate] Changes merged to " + branch);
 	new_batch.finish();
 
 	review.close();
@@ -37,7 +38,7 @@ function push() {
 
 	writeln(JSON.stringify({ status: "failure",
 				 code: "willnotpush",
-				 title: "Will not push to master",
+				 title: "Will not push to " + branch,
 				 message: String(error) }));
     }
 }
@@ -51,7 +52,8 @@ function add_remote(review) {
     var remote_base = critic.storage.get('remote_base');
     // FIXME: Not a guarantee that the repo name is also used at base
     wc.run("remote", "add", "target", remote_base + "/" + review.repository.name);
-    return [wc, remote_base]
+    wc.run("fetch", "target");
+    return wc
 }
 
 function can_push() {
@@ -63,6 +65,7 @@ function can_push() {
 
     try {
 	var review = new critic.Review(data.review_id);
+	var branch = data.branch;
 
 	// Should already have been checked - but verify
 	if( ! review.progress.accepted ) {
@@ -70,13 +73,14 @@ function can_push() {
 	}
 
 	// Add target and check if the review branch is based on it
-	var res = add_remote(review);
-	var wc = res[0];
-	var remote_base = res[1];
-	wc.run("fetch", "target", "master");
-	var merge_base = wc.run("merge-base", "HEAD", "target/master");
-	var target_master = wc.run("rev-parse", "target/master");
-	writeln(JSON.stringify({ status: "ok", integratable: merge_base == target_master }));
+	var wc = review.branch.getWorkCopy();
+	var remote_base = critic.storage.get('remote_base');
+	// wc.run("fetch", "target", branch);
+	var merge_base = wc.run("merge-base", "HEAD", "target/" + branch);
+	var target_branch = wc.run("rev-parse", "target/" + branch);
+	writeln(JSON.stringify({ status: "ok",
+				 integratable: merge_base == target_branch,
+				 branch: branch }));
     } catch (error) {
 	if( error instanceof critic.CriticError ) {
 	    throw error;
@@ -84,7 +88,7 @@ function can_push() {
 
 	writeln(JSON.stringify({ status: "failure",
 				 code: "willnotpush",
-				 title: "Will not push to master",
+				 title: "Will not push to " + branch,
 				 message: String(error) }));
     }
 }
@@ -107,7 +111,9 @@ function candidates() {
 	    return;
 	}
 
-	var wc = review.branch.getWorkCopy();
+	// Add the target remote and fetch
+	var wc = add_remote(review);
+
 	// List all branch names at target that contain the tail of the review
 	// This indicates that the review might have branched off from there
 	// and that it then is a likely candidate for integrating back to.
@@ -117,7 +123,7 @@ function candidates() {
 	branches = branches.split('\n');
 	// If master is in the list - we assume the most likely candidate is master
 	// At the master level there can be a huge number of irrelevant branches
-	if( branches.indexOf('master') != 0) {
+	if( branches.indexOf('master') != -1) {
 	    branches = ['master'];
 	}
 
