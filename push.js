@@ -1,5 +1,14 @@
 "use strict"
 
+function reviewers(review) {
+    var arr = [];
+    // For some reason seeing both IDs and names. Using regex to filter out the IDs
+    // TODO: Only list reviewers that actually reviewed something.
+    Object.keys(review.reviewers).map(function(v) {
+	if(!/\d+/.test(v)) arr.push(v); });
+    return arr.join(", ");
+}
+
 function push() {
     var data = JSON.parse(read());
 
@@ -19,6 +28,15 @@ function push() {
 	// Ready to try to push
 	// Assume remote is already setup in can_push()
 	var wc = review.branch.getWorkCopy();
+
+	var rnote = "Review-info: Reviewed in r/" + review.id + " by " + reviewers(review);
+	// Could have checked for existing notes here, but it seem that pushing notes
+	// to critic are rejected anyway. So for now assuming there are no existing notes.
+	wc.run("config", "user.email", critic.User.current.email);
+	wc.run("config", "user.name", critic.User.current.name);
+	wc.run("notes", "add", "-m", rnote);
+	wc.run("push", "target", "refs/notes/*");
+
 	var out = wc.run("push", "target", "--porcelain", "HEAD:refs/heads/" + branch);
 	if( out.split('\n')[1][0] == '=' ) {
 	    throw "Already integrated!";
@@ -53,6 +71,7 @@ function add_remote(review) {
     // FIXME: Not a guarantee that the repo name is also used at base
     wc.run("remote", "add", "target", remote_base + "/" + review.repository.name);
     wc.run("fetch", "target");
+    wc.run("fetch", "target", "refs/notes/*:refs/notes/*");
     return wc
 }
 
@@ -131,7 +150,7 @@ function candidates() {
 	    throw "Could not find a candidate branch - not even master!";
 	}
 
-	writeln(JSON.stringify({ status: "ok", branches: branches, info: "parents" }));
+	writeln(JSON.stringify({ status: "ok", branches: branches }));
 
     } catch (error) {
 	if( error instanceof critic.CriticError ) {

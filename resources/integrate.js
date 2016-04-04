@@ -27,7 +27,6 @@ operation = new critic.Operation({
 }
 
 function select_branch(result) {
-    console.log(result);
     var select = $('<select>');
     $.each(result.branches, function(id, val) {
 	select.append($('<option>').attr('value', val).text(val));
