@@ -1,6 +1,6 @@
 $( document ).ready(function() {
     var operation = new critic.Operation({
-      action: "Is review ready",
+      action: "Check if review is ready",
       url: "Integrate/ready",
       data: { review_id: critic.review.id },
       callback: add_button
@@ -18,7 +18,7 @@ function add_button(result) {
 
 function candidates() {
 operation = new critic.Operation({
-      action: "Branch candidates",
+      action: "Find branch candidates",
       url: "Integrate/candidates",
       data: { review_id: critic.review.id },
       callback: select_branch

@@ -7,6 +7,5 @@ function is_ready() {
 
     var review = new critic.Review(data.review_id);
 
-    writeln(JSON.stringify({ status: "ok", accepted: review.progress.accepted,
-			     commits: review.commits.tails}))
+    writeln(JSON.stringify({ status: "ok", accepted: review.progress.accepted }))
 }
