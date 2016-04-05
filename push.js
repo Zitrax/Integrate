@@ -1,12 +1,15 @@
 "use strict"
 
+// Finds all users that have actually
+// marked something as reviewed in the changed files.
 function reviewers(review) {
-    var arr = [];
-    // For some reason seeing both IDs and names. Using regex to filter out the IDs
-    // TODO: Only list reviewers that actually reviewed something.
-    Object.keys(review.reviewers).map(function(v) {
-	if(!/\d+/.test(v)) arr.push(v); });
-    return arr.join(", ");
+    var reviewers = {};
+    review.branch.commits.forEach(function(commit) {
+	review.getChangeset(commit).files.forEach(function(file) {
+	    reviewers[file.reviewedBy.name] = true;
+	});
+    });
+    return Object.keys(reviewers).join(", ");
 }
 
 function push() {
