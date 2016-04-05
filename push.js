@@ -31,10 +31,14 @@ function push() {
 
 	var rnote = "Review-info: Reviewed in r/" + review.id + " by " + reviewers(review);
 	// Could have checked for existing notes here, but it seem that pushing notes
-	// to critic are rejected anyway. So for now assuming there are no existing notes.
+	// to critic are rejected anyway.
 	wc.run("config", "user.email", critic.User.current.email);
-	wc.run("config", "user.name", critic.User.current.name);
-	wc.run("notes", "add", "-m", rnote);
+	wc.run("config", "user.name", critic.User.current.fullname);
+	try {
+	    wc.run("notes", "add", "-m", rnote);
+	} catch (error) {
+	    // This is fine - a note was already added / assumed by us
+	}
 	wc.run("push", "target", "refs/notes/*");
 
 	var out = wc.run("push", "target", "--porcelain", "HEAD:refs/heads/" + branch);
