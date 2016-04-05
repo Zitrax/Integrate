@@ -34,11 +34,16 @@ function push() {
 	// to critic are rejected anyway.
 	wc.run("config", "user.email", critic.User.current.email);
 	wc.run("config", "user.name", critic.User.current.fullname);
-	try {
-	    wc.run("notes", "add", "-m", rnote);
-	} catch (error) {
-	    // This is fine - a note was already added / assumed by us
-	}
+
+	// Add the note to each commit in the branch
+	review.branch.commits.forEach(function(commit) {
+	    try {
+		wc.run("notes", "add", "-m", rnote, commit.sha1);
+	    } catch (error) {
+		// This is fine - a note was already added / assumed by us
+	    }
+	});
+
 	wc.run("push", "target", "refs/notes/*");
 
 	var out = wc.run("push", "target", "--porcelain", "HEAD:refs/heads/" + branch);
