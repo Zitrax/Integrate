@@ -6,11 +6,6 @@ Description = Add button to review page
 Script = main.js
 Function = integrate
 
-[Inject manageextensions]
-Description = Add extension prefs
-Script = main.js
-Function = prefs
-
 [Page Integrate/push]
 Description = Push review to master
 Script = push.js
@@ -30,13 +25,3 @@ Function = can_push
 Description = Is review ready to be pushed
 Script = ready.js
 Function = is_ready
-
-[Page Integrate/get_prefs]
-Description = Get extension prefs
-Script = prefs.js
-Function = get_prefs
-
-[Page Integrate/set_prefs]
-Description = Set extension prefs
-Script = prefs.js
-Function = set_prefs

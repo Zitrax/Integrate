@@ -82,15 +82,19 @@ function push() {
     }
 }
 
+function get_target_remote(review) {
+    var data = { branch: review.repository.getBranch("master") };
+    return critic.TrackedBranch.find(data).remote;
+}
+
 function add_remote(review) {
     var wc = review.branch.getWorkCopy();
     var remotes = wc.run("remote");
     if( remotes.split("\n").indexOf("target") != -1 ) {
 	wc.run("remote", "remove", "target");
     }
-    var remote_base = critic.storage.get('remote_base');
-    // FIXME: Not a guarantee that the repo name is also used at base
-    wc.run("remote", "add", "target", remote_base + "/" + review.repository.name);
+    var remote_base = get_target_remote(review);
+    wc.run("remote", "add", "target", remote_base);
     wc.run("fetch", "target");
     wc.run("fetch", "target", "refs/notes/*:refs/notes/*");
     return wc
@@ -114,8 +118,6 @@ function can_push() {
 
 	// Add target and check if the review branch is based on it
 	var wc = review.branch.getWorkCopy();
-	var remote_base = critic.storage.get('remote_base');
-	// wc.run("fetch", "target", branch);
 	var merge_base = wc.run("merge-base", "HEAD", "target/" + branch);
 	var target_branch = wc.run("rev-parse", "target/" + branch);
 	writeln(JSON.stringify({ status: "ok",
