@@ -4,11 +4,20 @@
 // marked something as reviewed in the changed files.
 function reviewers(review) {
     var reviewers = {};
-    review.branch.commits.forEach(function(commit) {
-	review.getChangeset(commit).files.forEach(function(file) {
-	    reviewers[file.reviewedBy.name] = true;
-	});
-    });
+
+    function collect_reviewers(commit) {
+	try {
+	    review.getChangeset(commit).files.forEach(function(file) {
+		reviewers[file.reviewedBy.name] = true;
+	    });
+	} catch(error) {
+	    // Getting various exceptions when the changesets can't be found. So ignore...
+	}
+    };
+
+    review.branch.commits.forEach(collect_reviewers);
+    review.commits.forEach(collect_reviewers);
+
     return Object.keys(reviewers).join(", ");
 }
 
@@ -69,7 +78,7 @@ function push() {
 	writeln(JSON.stringify({ status: "failure",
 				 code: "willnotpush",
 				 title: "Will not push to " + branch,
-				 message: String(error) }));
+				 message: String(error) + "<br><br>" + error.stack}));
     }
 }
 
