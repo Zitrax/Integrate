@@ -21,6 +21,38 @@ function reviewers(review) {
     return Object.keys(reviewers).join(", ");
 }
 
+function cgit_range(repo, branch, from, to) {
+    // FIXME: Should not be hardcoded
+    return "[" + from + ".." + to + "|http://dev-git/" + repo +
+	"/log/?h=" + branch + "&qt=range&q=" + from + ".." + to + "]";
+}
+
+function review_link(id) {
+    // FIXME: Should not be hardcoded
+    return "[r/" + id + "|http://dev-git:8080/r/" + id + "]";
+}
+
+function add_jira_comment(review, branch, sha1_update) {
+    try {
+	var issue = null;
+	var match = review.summary.match(/^([A-Z]{2,7}-\d+):.*/);
+	if( match ) {
+	    issue = new critic.bts.Issue(match[1]);
+	    if( sha1_update ) {
+		var repo = review.repository.name;
+		issue.addComment("Review " + review_link(review.id) + " merged to " + branch + " in "
+				 + cgit_range(repo, branch, sha1_update[1], sha1_update[2])) + ".";
+	    } else {
+		issue.addComment("Review " + review_link(review.id) + " merged to " + branch + ".");
+	    }
+	}
+    } catch(error) {
+	// Currently ignoring. Could be one of two known reasons:
+	// * Issue does not exist - or could not be retrieved
+	// * The BTS extension is not installed.
+    }
+}
+
 function push() {
     var data = JSON.parse(read());
 
@@ -38,7 +70,7 @@ function push() {
 	}
 
 	// Ready to try to push
-	// Assume remote is already setup in can_push()
+	// Assume remote is already setup in candidates()
 	var wc = review.branch.getWorkCopy();
 
 	var rnote = "Review-info: Reviewed in r/" + review.id + " by " + reviewers(review);
@@ -59,9 +91,14 @@ function push() {
 	wc.run("push", "target", "refs/notes/*");
 
 	var out = wc.run("push", "target", "--porcelain", "HEAD:refs/heads/" + branch);
+	var sha1_update = null;
 	if( out.split('\n')[1][0] == '=' ) {
 	    throw "Already integrated!";
+	} else {
+	    sha1_update = out.match(/([a-f,0-9]{7,})\.\.([a-f,0-9]{7,})/);
 	}
+
+	add_jira_comment(review, branch, sha1_update);
 
 	var new_batch = review.startBatch();
 	new_batch.writeNote("[Integrate] Changes merged to " + branch);
