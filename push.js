@@ -21,15 +21,27 @@ function reviewers(review) {
     return Object.keys(reviewers).join(", ");
 }
 
-function cgit_range(repo, branch, from, to) {
-    // FIXME: Should not be hardcoded
-    return "[" + from + ".." + to + "|http://dev-git/" + repo +
+function cgit_range(repo, branch, sha1_update) {
+    if(!sha1_update) {
+	return null;
+    }
+    var ini = IO.File.read("integrate.ini");
+    var cgit_url = ini.decode().match(/cgit_url\s*=\s*(\S*)/);
+    if( !cgit_url ) {
+	return null;
+    }
+
+    var from = sha1_update[0];
+    var to = sha1_update[1];
+
+    return "[" + from + ".." + to + "|" + cgit_url[1] + repo +
 	"/log/?h=" + branch + "&qt=range&q=" + from + ".." + to + "]";
 }
 
 function review_link(id) {
-    // FIXME: Should not be hardcoded
-    return "[r/" + id + "|http://dev-git:8080/r/" + id + "]";
+    var ini = IO.File.read("integrate.ini");
+    var critic_url = ini.decode().match(/critic_url\s*=\s*(\S*)/);
+    return "[r/" + id + "|" + critic_url[1] + "r/" + id + "]";
 }
 
 function add_jira_comment(review, branch, sha1_update) {
@@ -38,12 +50,13 @@ function add_jira_comment(review, branch, sha1_update) {
 	var match = review.summary.match(/^([A-Z]{2,7}-\d+):.*/);
 	if( match ) {
 	    issue = new critic.bts.Issue(match[1]);
-	    if( sha1_update ) {
+	    var rlink = review_link(review.id);
+	    var cgit = cgit_range(repo, branch, sha1_update);
+	    if( cgit ) {
 		var repo = review.repository.name;
-		issue.addComment("Review " + review_link(review.id) + " merged to " + branch + " in "
-				 + cgit_range(repo, branch, sha1_update[1], sha1_update[2])) + ".";
+		issue.addComment("Review " + rlink + " merged to " + branch + " in " + cgit + ".");
 	    } else {
-		issue.addComment("Review " + review_link(review.id) + " merged to " + branch + ".");
+		issue.addComment("Review " + rlink + " merged to " + branch + ".");
 	    }
 	}
     } catch(error) {
