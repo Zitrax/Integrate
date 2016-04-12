@@ -197,21 +197,19 @@ function candidates() {
     try {
 	var review = new critic.Review(data.review_id);
 	var commits = review.commits;
-	// First assume that we have a single tail
-	if( commits.tails.length != 1 ) {
-	    writeln(JSON.stringify({ status: "ok", branches: ["master"], info: commit.tails.length + " tails" }));
-	    return;
-	}
 
 	// Add the target remote and fetch
 	var wc = add_remote(review);
+
+	// There can be more tails if we have rebased. The last one should be the most recent rebase ( I hope )
+	var tail_sha1 = commits.tails[commits.tails.length - 1].sha1;
 
 	// List all branch names at target that contain the tail of the review
 	// This indicates that the review might have branched off from there
 	// and that it then is a likely candidate for integrating back to.
 	// Note: --contains is only supported in git >= 2.7
 	var branches = wc.run("for-each-ref", "--format=%(refname:strip=3)",
-			      "--contains", commits.tails[0].sha1, "refs/remotes/target").trim();
+			      "--contains", tail_sha1, "refs/remotes/target").trim();
 	branches = branches.split('\n');
 	// If master is in the list - we assume the most likely candidate is master
 	// At the master level there can be a huge number of irrelevant branches
