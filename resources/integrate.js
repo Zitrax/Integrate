@@ -21,6 +21,7 @@ operation = new critic.Operation({
       action: "Find branch candidates",
       url: "Integrate/candidates",
       data: { review_id: critic.review.id },
+      wait: "Finding branch candidates...",
       callback: select_branch
     });
     operation.execute();
