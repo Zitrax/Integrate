@@ -96,6 +96,7 @@ function do_push_dialog(res) {
 }
 
 function done(res) {
+    console.log(res);
     if( res != null )
 	location.reload();
 }

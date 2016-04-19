@@ -31,8 +31,8 @@ function cgit_range(repo, branch, sha1_update) {
 	return null;
     }
 
-    var from = sha1_update[0];
-    var to = sha1_update[1];
+    var from = sha1_update[1];
+    var to = sha1_update[2];
 
     return "[" + from + ".." + to + "|" + cgit_url[1] + repo +
 	"/log/?h=" + branch + "&qt=range&q=" + from + ".." + to + "]";
@@ -49,21 +49,24 @@ function add_jira_comment(review, branch, sha1_update) {
 	var issue = null;
 	var match = review.summary.match(/^([A-Z]{2,7}-\d+):.*/);
 	if( match ) {
-	    issue = new critic.bts.Issue(match[1]);
 	    var rlink = review_link(review.id);
+	    var repo = review.repository.name;
 	    var cgit = cgit_range(repo, branch, sha1_update);
-	    if( cgit ) {
-		var repo = review.repository.name;
-		issue.addComment("Review " + rlink + " merged to " + branch + " in " + cgit + ".");
-	    } else {
-		issue.addComment("Review " + rlink + " merged to " + branch + ".");
+	    if( critic.bts ) {
+		issue = new critic.bts.Issue(match[1]);
+		if( cgit ) {
+		    issue.addComment("Review " + rlink + " merged to " + branch + " in " + cgit + ".");
+		} else {
+		    issue.addComment("Review " + rlink + " merged to " + branch + ".");
+		}
 	    }
+	    return cgit;
 	}
     } catch(error) {
-	// Currently ignoring. Could be one of two known reasons:
-	// * Issue does not exist - or could not be retrieved
-	// * The BTS extension is not installed.
+	return error;
     }
+    return "no issue";
+
 }
 
 function push() {
@@ -111,7 +114,7 @@ function push() {
 	    sha1_update = out.match(/([a-f,0-9]{7,})\.\.([a-f,0-9]{7,})/);
 	}
 
-	add_jira_comment(review, branch, sha1_update);
+	var jira_info = add_jira_comment(review, branch, sha1_update);
 
 	var new_batch = review.startBatch();
 	new_batch.writeNote("[Integrate] Changes merged to " + branch);
@@ -119,7 +122,7 @@ function push() {
 
 	review.close();
 
-	writeln(JSON.stringify({ status: "ok" }));
+	writeln(JSON.stringify({ status: "ok", jira: String(jira_info) }));
     } catch (error) {
 	if( error instanceof critic.CriticError ) {
 	    throw error;
