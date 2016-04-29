@@ -215,13 +215,14 @@ function candidates() {
 	var branches = wc.run("for-each-ref", "--format=%(refname:strip=3)",
 			      "--contains", tail_sha1, "refs/remotes/target").trim();
 	branches = branches.split('\n');
+
 	// If master is in the list - we assume the most likely candidate is master
 	// At the master level there can be a huge number of irrelevant branches
 	if( branches.indexOf('master') != -1) {
 	    branches = ['master'];
 	}
 
-	if( branches.length == 0 ) {
+	if( branches.length == 0 || branches[0].length == 0) {
 	    throw "Could not find a candidate branch - not even master!";
 	}
 
