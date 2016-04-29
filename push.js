@@ -204,8 +204,9 @@ function candidates() {
 	// Add the target remote and fetch
 	var wc = add_remote(review);
 
-	// There can be more tails if we have rebased. The last one should be the most recent rebase ( I hope )
-	var tail_sha1 = commits.tails[commits.tails.length - 1].sha1;
+	// There can be more tails if we have rebased.
+	// The last one might apparently not be usable, so lets try the first.
+	var tail_sha1 = commits.tails[0].sha1;
 
 	// List all branch names at target that contain the tail of the review
 	// This indicates that the review might have branched off from there
