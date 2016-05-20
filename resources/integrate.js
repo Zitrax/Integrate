@@ -17,14 +17,36 @@ function add_button(result) {
 }
 
 function candidates() {
-operation = new critic.Operation({
-      action: "Find branch candidates",
-      url: "Integrate/candidates",
-      data: { review_id: critic.review.id },
-      wait: "Finding branch candidates...",
-      callback: select_branch
+
+    operation = new critic.Operation({
+	action: "Find branch candidates",
+	url: "Integrate/candidates",
+	data: { review_id: critic.review.id, rebase: null },
+	wait: "Finding branch candidates...",
+	callback: select_branch
     });
-    operation.execute();
+
+    // Seems like we can't reliably find the most recent rebase in the extension api
+    // so use the json api to find it and pass along.
+    $.getJSON("/api/v1/reviews/" + critic.review.id + "/rebases")
+	.done(function(data) {
+	    var rebased = false;
+	    $.each( data.rebases, function(key, val) {
+		if(val.type == "move") {
+		    $.getJSON("/api/v1/reviews/" + critic.review.id).done(function(data) {
+			$.getJSON("/api/v1/commits/" + val.new_upstream + "?repository=" + data.repository)
+			    .done(function(data) {
+				operation.data.rebase = data.sha1;
+				operation.execute();
+			    });
+		    });
+		    rebased = true;
+		    return false; // breaks loop
+		}
+	    });
+	    if( !rebased )
+		operation.execute();
+	});
 }
 
 function select_branch(result) {
