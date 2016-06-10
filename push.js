@@ -135,8 +135,19 @@ function push() {
     }
 }
 
+function rstore() {
+    // The values are not per user - but the api require a user
+    // so always store the data for user 1.
+    return new critic.Storage(new critic.User(1));
+}
+
 function get_target_remote(review) {
-    var data = { branch: review.repository.getBranch("master") };
+    var refname = rstore().get('refbranch:' + review.repository.name);
+    if(refname == undefined) {
+	refname = "master";
+    }
+
+    var data = { branch: review.repository.getBranch(refname) };
     return critic.TrackedBranch.find(data).remote;
 }
 
