@@ -221,7 +221,8 @@ function candidates() {
 
 	// If master is in the list - we assume the most likely candidate is master
 	// At the master level there can be a huge number of irrelevant branches
-	if( branches.indexOf('master') != -1) {
+	// 5 is a arbitrarily chosen cut-off to limit the case with irrelevant branches.
+	if( branches.indexOf('master') != -1 && branches.length > 5) {
 	    branches = ['master'];
 	}
 
