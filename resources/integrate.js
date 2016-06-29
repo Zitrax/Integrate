@@ -32,9 +32,10 @@ function candidates() {
 	.done(function(data) {
 	    var rebased = false;
 	    $.each( data.rebases, function(key, val) {
-		if(val.type == "move") {
+		if(val.type == "move" || val.type == "history-rewrite") {
 		    $.getJSON("/api/v1/reviews/" + critic.review.id).done(function(data) {
-			$.getJSON("/api/v1/commits/" + val.new_upstream + "?repository=" + data.repository)
+			var new_commit = val.type == "move" ? val.new_upstream : val.new_head;
+			$.getJSON("/api/v1/commits/" + new_commit + "?repository=" + data.repository)
 			    .done(function(data) {
 				operation.data.rebase = data.sha1;
 				operation.execute();
@@ -51,6 +52,9 @@ function candidates() {
 
 function select_branch(result) {
     var select = $('<select>');
+    if( result == null ) {
+	return;
+    }
     $.each(result.branches, function(id, val) {
 	select.append($('<option>').attr('value', val).text(val));
     });
