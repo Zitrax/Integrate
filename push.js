@@ -238,7 +238,7 @@ function candidates() {
 	}
 
 	if( branches.length == 0 || branches[0].length == 0) {
-	    throw "Could not find a candidate branch - not even master!";
+	    throw "Could not find a candidate branch - not even master! (tail = " + tail_sha1 + ")";
 	}
 
 	writeln(JSON.stringify({ status: "ok", branches: branches }));
