@@ -32,7 +32,8 @@ function candidates() {
 	.done(function(data) {
 	    var rebased = false;
 	    $.each( data.rebases, function(key, val) {
-		if(val.type == "move" || val.type == "history-rewrite") {
+		// FIXME: The history-rewrite part does not work, we need the base not the head
+		if(val.type == "move" /* || val.type == "history-rewrite" */) {
 		    $.getJSON("/api/v1/reviews/" + critic.review.id).done(function(data) {
 			var new_commit = val.type == "move" ? val.new_upstream : val.new_head;
 			$.getJSON("/api/v1/commits/" + new_commit + "?repository=" + data.repository)
