@@ -217,31 +217,46 @@ function candidates() {
 
 	// There can be more tails if we have rebased. I did not find a way to
 	// reliably know what is the latest one - but we can find it with the
-	// json api and is passed here as data.rebase. If not we try the first tail.
-	var tail_sha1 = data.rebase;
-	if( tail_sha1 == null )
-	    tail_sha1 = commits.tails[0].sha1;
+	// json api and is passed here as data.rebase.
+	// We also try each tail to find all possibly candidates.
+	var sha1s = [];
+	if(data.rebase) {
+	    sha1s.push(data.rebase);
+	}
+	commits.tails.forEach(function(tail) { sha1s.push(tail.sha1); });
 
-	// List all branch names at target that contain the tail of the review
-	// This indicates that the review might have branched off from there
-	// and that it then is a likely candidate for integrating back to.
-	// Note: --contains is only supported in git >= 2.7
-	var branches = wc.run("for-each-ref", "--format=%(refname:strip=3)",
-			      "--contains", tail_sha1, "refs/remotes/target").trim();
-	branches = branches.split('\n');
+	var all_branches = {};
+
+	sha1s.forEach(function(sha1) {
+
+	    // List all branch names at target that contain the tail of the review
+	    // This indicates that the review might have branched off from there
+	    // and that it then is a likely candidate for integrating back to.
+	    // Note: --contains is only supported in git >= 2.7
+	    var branches = wc.run("for-each-ref", "--format=%(refname:strip=3)",
+				  "--contains", sha1, "refs/remotes/target").trim();
+	    branches = branches.split('\n');
+	    branches.forEach(function(b) {
+		if(b.length) {
+		    all_branches[b] = true;
+		}
+	    });
+	});
+
+	all_branches = Object.keys(all_branches);
 
 	// If master is in the list - we assume the most likely candidate is master
 	// At the master level there can be a huge number of irrelevant branches
 	// 5 is a arbitrarily chosen cut-off to limit the case with irrelevant branches.
-	if( branches.indexOf('master') != -1 && branches.length > 5) {
-	    branches = ['master'];
+	if( all_branches.indexOf('master') != -1 && all_branches.length > 5) {
+	    all_branches = ['master'];
 	}
 
-	if( branches.length == 0 || branches[0].length == 0) {
-	    throw "Could not find a candidate branch - not even master! (tail = " + tail_sha1 + ")";
+	if( all_branches.length == 0 || all_branches[0].length == 0) {
+	    throw "Could not find a candidate branch - not even master!";
 	}
 
-	writeln(JSON.stringify({ status: "ok", branches: branches }));
+	writeln(JSON.stringify({ status: "ok", branches: all_branches }));
 
     } catch (error) {
 	if( error instanceof critic.CriticError ) {
