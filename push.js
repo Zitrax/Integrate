@@ -233,8 +233,14 @@ function candidates() {
 	    // This indicates that the review might have branched off from there
 	    // and that it then is a likely candidate for integrating back to.
 	    // Note: --contains is only supported in git >= 2.7
-	    var branches = wc.run("for-each-ref", "--format=%(refname:strip=3)",
-				  "--contains", sha1, "refs/remotes/target").trim();
+	    var branches = "";
+	    try {
+		var branches = wc.run("for-each-ref", "--format=%(refname:strip=3)",
+				      "--contains", sha1, "refs/remotes/target").trim();
+	    } catch (error) {
+		// FIXME: The above sometimes fails due to missing sha1. Unsure why.
+		//        Until this is debugged or turns out to be a real issue just ignore it.
+	    }
 	    branches = branches.split('\n');
 	    branches.forEach(function(b) {
 		if(b.length) {
