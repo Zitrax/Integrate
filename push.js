@@ -46,22 +46,28 @@ function review_link(id) {
 
 function add_jira_comment(review, branch, sha1_update) {
     try {
-        var issue = null;
-        var match = review.summary.match(/^([A-Z]{2,7}-\d+):.*/);
-        if( match ) {
-            var rlink = review_link(review.id);
-            var repo = review.repository.name;
-            var cgit = cgit_range(repo, branch, sha1_update);
-            if( critic.bts ) {
-                issue = new critic.bts.Issue(match[1]);
-                if( cgit ) {
-                    issue.addComment("Review " + rlink + " merged to " + branch + " in " + cgit + ".");
-                } else {
-                    issue.addComment("Review " + rlink + " merged to " + branch + ".");
-                }
-            }
-            return cgit;
+        if(!critic.bts) {
+            return "no bts";
         }
+
+	review.branch.commits.forEach(function(commit) {
+            var issue = null;
+            var match = commit.summary.match(/^([A-Z]{2,7}-\d+):.*/);
+            if( match ) {
+		var rlink = review_link(review.id);
+		var repo = review.repository.name;
+		var cgit = cgit_range(repo, branch, sha1_update);
+		issue = new critic.bts.Issue(match[1]);
+		if( cgit ) {
+                    issue.addComment("Review " + rlink + " merged to " + branch + " in " + cgit + " in repository " + repo + ".");
+		} else {
+                    issue.addComment("Review " + rlink + " merged to " + branch + " in repository " + repo + ".");
+		}
+	    }
+        });
+
+	return "jira updated";
+
     } catch(error) {
         return error;
     }
