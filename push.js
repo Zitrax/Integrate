@@ -1,3 +1,5 @@
+// -*- tab-width: 4; indent-tabs-mode: nil; -*-
+
 "use strict"
 
 // Finds all users that have actually
