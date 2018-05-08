@@ -45,34 +45,36 @@ function review_link(id) {
 }
 
 function add_jira_comment(review, branch, sha1_update) {
-    try {
+
         if(!critic.bts) {
             return "no bts";
         }
 
-	review.branch.commits.forEach(function(commit) {
-            var issue = null;
-            var match = commit.summary.match(/^([A-Z]{2,7}-\d+):.*/);
-            if( match ) {
-		var rlink = review_link(review.id);
-		var repo = review.repository.name;
-		var cgit = cgit_range(repo, branch, sha1_update);
-		issue = new critic.bts.Issue(match[1]);
-		if( cgit ) {
-                    issue.addComment("Review " + rlink + " merged to " + branch + " in " + cgit + " in repository " + repo + ".");
-		} else {
-                    issue.addComment("Review " + rlink + " merged to " + branch + " in repository " + repo + ".");
-		}
-	    }
+        var issues = {};
+        review.branch.commits.forEach(function(commit) {
+            try {
+                var issue = null;
+                var match = commit.summary.match(/^([A-Z]{2,7}-\d+):.*/);
+                if( match ) {
+                    if(!issues[match[1]]) {
+                        issues[match[1]] = true;
+                        var rlink = review_link(review.id);
+                        var repo = review.repository.name;
+                        var cgit = cgit_range(repo, branch, sha1_update);
+                        issue = new critic.bts.Issue(match[1]);
+                        if( cgit ) {
+                            issue.addComment("Review " + rlink + " merged to " + branch + " in " + cgit + " in repository " + repo + ".");
+                        } else {
+                            issue.addComment("Review " + rlink + " merged to " + branch + " in repository " + repo + ".");
+                        }
+                    }
+                }
+            } catch(error) {
+                console.log(error);
+            }
         });
 
-	return "jira updated";
-
-    } catch(error) {
-        return error;
-    }
-    return "no issue";
-
+    return "jira updated";
 }
 
 function push() {
